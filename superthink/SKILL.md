@@ -1,104 +1,115 @@
 ---
 name: superthink
-description: Clarify requirements, understand the problem, and plan implementation when ambiguity or consequential trade-offs risk building the wrong thing; investigate bugs, troubleshoot exceptions, analyze failures and regressions through root cause analysis; review code, validate implementation, check missing cases, and verify correctness against requirements. Use for these reasoning needs, including before delivering an implementation or fix, not routine explanations, mechanical edits, or clear low-risk tasks.
+description: 当需求模糊、重要取舍或较大影响范围可能导致做错方向时，澄清需求、理解真实问题并制定实现计划；当出现缺陷、异常、测试失败、回归或性能突降时，以证据定位根因；当需要代码审查、验证已有实现、检查遗漏或准备交付实现与修复时，对照需求验证正确性。不用于普通代码解释、机械修改或明确且低风险的任务。
 ---
 
 # superthink
 
-Apply the least reasoning process needed to reach a correct, evidenced outcome. This is a standing reasoning discipline, not a fixed workflow or three user-facing commands. Use Claude Code's existing search, reading, editing, execution, diff, and testing capabilities; require no other skill, reference, script, CLI package, MCP, or plugin. Use project tools when available; do not invent replacements for native planning, todos, git, tests, or subagents.
+以最低必要流程获得正确、有证据支持的结果。这是持续适用的推理纪律，不是固定工作流，也不是三个用户命令。直接使用 Claude Code 已有的搜索、阅读、编辑、命令执行、差异检查和测试能力；不依赖其他 Skill、外部参考文件、脚本、额外 CLI、MCP 或插件。项目已有工具可直接使用，不重新实现规划、待办、版本控制、测试或子代理框架。
 
-## Shared rules
+## Shared Rules
 
-- Understand before changing. Ask the codebase before asking the user.
-- Evidence before conclusions. Distinguish observed facts, hypotheses, and assumptions.
-- Root cause before fixes. Requirements before review. Verification before confidence.
-- Ask only when necessary. Stop when sufficient. Preserve the user's scope and existing authorization.
-- Share concise conclusions and supporting evidence, not an internal reasoning transcript or a ceremonial checklist. Match the user's language.
+- 修改之前先理解；询问用户之前先询问代码库。
+- 结论之前先获取证据；明确区分事实、待验证假设和执行时采用的假定。
+- 修复之前先定位根因；审查之前先对照需求；有验证才能有把握。
+- 只问必要问题，信息充分即停止；保持用户范围与既有授权。
+- 自己、人类或其他模型写的代码都使用同一证据标准，不因作者身份放松审查。
+- 自然说明结论、重要假设和支持证据，不输出内部推理记录或仪式化清单。使用用户的语言交流。
 
-## Quiet routing and depth
+## Quiet Routing & Progressive Depth
 
-Choose the immediate reasoning need from context; reassess when new evidence changes it. Do not ask the user to choose a mode or routinely announce mode names.
+根据上下文选择当前最需要的判断；出现新证据时重新判断。不让用户选择模式，也不例行宣布模式名称。
 
-| Current need | Internal route |
+| 当前需要 | 内部路由 |
 | --- | --- |
-| Desired new behavior with uncertainty; feature, API, module, architecture, refactor, or planning with meaningful trade-offs or broad impact | UNDERSTAND |
-| Unexpected current behavior; bug, exception, crash, failing test/CI, regression, sudden slowdown, inconsistent data, race, or investigation request | DEBUG |
-| Assess existing work; review, PR/diff, missing cases, “is this correct?”, or implementation/fix ready for delivery | VERIFY |
-| Explanation, summary, or clear mechanical task without these risks | Normal assistance; no protocol |
+| 新行为存在不确定性；功能、接口、模块、架构、重构或计划涉及重要取舍、较大影响范围 | UNDERSTAND |
+| 当前行为异常；缺陷、异常退出、测试或 CI 失败、回归、性能突降、数据不一致、竞态或定位请求 | DEBUG |
+| 检查已有实现、PR 或差异、确认遗漏与正确性，或实现和修复准备交付 | VERIFY |
+| 普通解释、摘要或明确且低风险的机械任务 | 正常协助，不运行协议 |
 
-For overlapping requests, start with the immediate blocker: bug + fix → DEBUG → fix → VERIFY; new feature + implementation → UNDERSTAND → implement → VERIFY; existing diff + review → VERIFY. A failure during implementation or verification leads to DEBUG; a contract ambiguity that changes the solution calls for focused UNDERSTAND. Resume the authorized task afterwards. A plan-only request ends with a plan; a review-only request reports findings without silently editing code.
+同时匹配时先处理当前阻碍：修缺陷 → DEBUG → 修复 → VERIFY；实现新功能 → UNDERSTAND → 实现 → VERIFY；审查已有差异 → VERIFY。实现或验证中出现失败时转入 DEBUG；契约歧义会改变方案时，进行局部 UNDERSTAND，然后继续已授权的任务。只要计划就交付计划；只要审查就报告问题，不擅自修改代码。
 
-Scale depth to uncertainty, impact, and reversibility:
+根据不确定性、影响和可逆性逐级加深：
 
-- **Level 1:** Clear, local, low-risk work: act directly and make a proportionate check. No interview or formal plan.
-- **Level 2:** Some uncertainty: inspect relevant code and contracts, resolve the material gap, use targeted evidence and verification.
-- **Level 3:** Complex, high-risk, or cross-module work: trace boundaries, clarify consequential decisions, and use the fuller applicable guidance below. Never run all modes just because the task is large.
+- **Level 1：** 明确、局部、低风险，直接执行并做相称检查，不访谈、不强制计划。
+- **Level 2：** 有一些不确定性，检查相关代码与契约，解决重要缺口，做针对性验证。
+- **Level 3：** 复杂、高风险或跨模块，追踪边界、澄清关键决策，采用下方适用的完整指导。不能仅因任务大就运行全部模式。
 
-## UNDERSTAND — what problem are we solving?
+## UNDERSTAND — 弄清问题
 
-Read relevant code, tests, docs, callers, architecture, and conventions first. Infer test framework, file organization, API patterns, dependency injection, and error handling from the repository. Inspect only what can affect the decision.
+先读相关代码、测试、文档、调用方、架构和约定。从代码库自行确定测试框架、文件组织、接口模式、依赖注入及错误处理方式，只调查可能影响决策的内容。没有代码库时，根据已给上下文判断，不虚构现有架构。
 
-Establish enough of the following to act:
+明确到足以执行即可：
 
-- **Problem / outcome:** Why change anything, and what observable behavior should change? Distinguish a requested solution from its underlying problem without overriding an explicit user choice.
-- **Success criteria:** Concrete accepted behavior, including the important failure path.
-- **Constraints / scope:** What must hold, what is excluded, and where the implementation ends.
-- **Trade-offs / existing contract:** Which of correctness, speed, compatibility, complexity, and performance matters here? Which existing behaviors must remain?
+- **问题与结果：** 谁在什么场景受益？为什么现在要改？完成后什么可观察行为会变化？区分用户提出的方案与真正问题，但不擅自推翻明确的技术选择。
+- **成功标准：** 用具体例子或可检验指标描述正常行为及重要失败路径。“更快”“可扩展”“现代化”不是完整标准；必要时明确负载、延迟、规模或实际使用方式。
+- **约束与范围：** 哪些条件不能违反？本次明确不做什么？实现边界在哪里？
+- **取舍与既有契约：** 正确性、速度、兼容性、复杂度、性能如何权衡？哪些行为必须保持？
 
-Look for material hidden assumptions: compatibility, consistency, failure strategy, migration, performance bounds, and security boundaries. Treat these as investigation prompts, not extra requirements to invent.
+主动检查兼容性、一致性、失败策略、迁移、性能边界及安全边界中的重要隐含假设。这些是调查线索，不是新增需求。若回答只有惯例或“最佳实践”，追问实际用途；若前后要求冲突，指出具体冲突，不默默替用户选择。
 
-Ask only if the answer cannot be obtained from the repository/context, multiple reasonable answers remain, and choosing wrongly would materially change the approach or cause rework. Ask the single most consequential question first. Use `Question Cost < Wrong-Assumption Cost`; do not turn this into a questionnaire or ask about already settled decisions.
+只有答案无法从代码库或上下文获得、仍有多个合理答案、猜错会显著改变方案或造成返工时才问。每次优先问最关键的一个问题；适合时附上简短的当前理解及依据，让用户容易纠正，但不要诱导同意或故意给出错误猜测。仅当提问成本明显低于错误假设成本时提问，不问已解决的问题。
 
-If told “don't ask, just do it,” proceed with reasonable assumptions and briefly label material ones `Assumption:`. For an unresolved destructive operation, irreversible migration, major public API change, security-sensitive assumption, or completely ambiguous goal, state the concrete uncertainty; pause only the dependent action when missing intent or authorization makes proceeding unsafe. Do independent work and do not ask again for authorization already given.
+用户说“不要问，直接做”时，采用合理假设执行，将重要假设简短标为 `Assumption:`。遇到尚未解决的破坏性操作、不可逆迁移、重大公共接口变更、安全敏感假设或完全不明确的目标时，说明具体不确定性；只有缺少意图或授权使执行不安全时，才暂停依赖该信息的动作。继续独立工作，不重复索取已有授权。非交互环境中不等待访谈：可安全推断就注明假设推进，否则报告最小阻塞项。
 
-**Exit:** Problem, outcome, important constraints, acceptance criteria, relevant architecture, and implementation boundary are sufficiently clear. Stop asking when remaining uncertainty will not change the approach; do not chase a confidence percentage.
+澄清后，用用户的措辞简短重述目标、受益者、成功标准、关键约束和不在范围内的事项，并吸收后续纠正。不设置固定信心百分比或例行确认关卡；用户明确委托自行判断时尊重委托。多轮提问仍无进展时，重新界定缺失的核心信息，不继续扩展问卷。
 
-For substantial work, give a concise executable plan covering: Goal; Relevant Existing Behavior; Proposed Change; Files / Components likely affected; Important Constraints; Implementation Steps; Verification; Risks / Assumptions. Name concrete components, behavior changes, and checks instead of “change backend, add tests.” Compress or omit the template for simple work. If implementation is authorized, continue without a ceremonial approval gate.
+**停止条件：** 问题、结果、重要约束、验收标准、相关架构和实现边界已足够明确；剩余问题不会改变方案，就停止提问。
 
-## DEBUG — what causes the failure?
+较大任务给出简洁可执行计划，覆盖：目标、相关既有行为、拟议变更、可能影响的文件或组件、重要约束、实施步骤、验证、风险与假设。步骤写出具体组件、行为变化及检查，按依赖顺序安排，不能只写“改后端、加测试”。简单任务压缩或省略模板。已授权实现时直接继续，不另设审批关卡，也不默认生成独立需求文档。
 
-**Do not fix what you do not understand.** Before changing production logic, establish an evidence-supported causal explanation. A plausible patch or a green test alone is not a root cause.
+## DEBUG — 定位根因
 
-1. Compare observed and expected behavior. Read the full error, stack trace, failing assertion, inputs, environment, and relevant contract. Record a reproduction or the conditions under which failure occurs.
-2. Locate the failure boundary. Trace call/data flow from the symptom toward the first invalid state or broken contract. Inspect relevant logs, runtime state, recent diff/history, and working versus failing cases. Use boundary instrumentation, a minimal reproduction, or bisect when it narrows the search; do not collect everything indiscriminately.
-3. Form one primary falsifiable hypothesis tied to evidence. Specify the predicted observation and smallest experiment that distinguishes it from alternatives. Run it, record the result, and retain or reject the hypothesis before trying the next. Do not bundle unrelated speculative edits.
-4. Confirm the causal chain: trigger → mechanism → violated contract → symptom. For intermittent/concurrent failures, examine event order and use controlled scheduling or repeated reproduction where practical; one passing rerun does not establish a fix.
-5. When test infrastructure permits, add a meaningful regression test and observe it fail for the original reason before the fix. Then make the smallest local correction at the responsible contract boundary, following the existing design. Verify the regression passes and switch to VERIFY for adjacent risks.
+**没有理解原因，就不要修。** 改动业务逻辑前先形成有证据支持的因果解释。补丁看似合理或测试变绿，都不等于根因已确认。紧急情况可压缩调查范围，不能用紧迫感替代证据。
 
-Temporary diagnostic changes or isolated experiments are allowed before confirmation; they are not a fix. Remove obsolete instrumentation and speculative changes you introduced without discarding user work. Do not hide symptoms with blanket null guards, swallowed exceptions, arbitrary retries, changed assertions, unrelated refactors, new abstractions, or unrequested API changes.
+1. **确认现象。** 对照实际与预期行为，完整阅读错误、堆栈、失败断言、输入、环境和相关契约。记录复现步骤、触发条件及发生频率。
+2. **定位边界。** 从症状沿调用链和数据流追溯到首次无效状态或契约破坏。检查日志、运行状态、近期提交，以及依赖、配置和环境变化。跨组件问题检查相关边界的输入、输出、状态和配置传递，确定首次偏离发生在哪一层；记录脱敏值或配置是否存在，不输出密钥和敏感数据。
+3. **分析差异。** 寻找代码库中相似的正常实现或正常运行样本，比较输入、调用顺序、依赖、配置、环境及前置条件。阅读相关实现的完整逻辑，不能只抄片段；列出可能影响结果的差异，再逐一排除，不凭直觉忽略小差异。必要时用最小复现、边界观测或二分定位缩小范围。
+4. **检验单个假设。** 将主要假设与证据关联，说明预期观察和能区分其他解释的最小实验。每次只改变一个主要变量；记录结果，保留或否定该假设后再继续。实验失败就更新判断，不在失败补丁上叠加新猜测。
+5. **确认因果链。** 触发条件 → 机制 → 被破坏的契约 → 症状。间歇性或并发问题需检查事件顺序，尽量控制调度或重复复现；一次通过不能证明修复。异步测试优先等待真实事件或状态，设有限超时和失败说明；不靠延长固定休眠掩盖竞态。测试真实时间语义时保留有依据的计时。
+6. **修复并验证。** 测试设施允许时先补能复现原始缺陷的回归测试，确认修复前因原始原因失败，再在负责该契约的边界做最小局部修复，遵循现有设计。确认回归测试通过，进入 VERIFY 检查相邻风险。
 
-For example, a null error requires tracing where null first appeared and whether the contract permits it. A guard is justified only if null is valid and that boundary owns its handling.
+确认根因前允许临时诊断改动和隔离实验，但它们不是修复。清理自己引入的无用诊断和猜测性修改，不丢弃用户工作。不要用无差别空值保护、吞异常、任意重试、弱化断言、无关重构、新抽象或未请求的接口变更掩盖症状。空值错误要追踪空值首次产生的位置和契约；只有允许为空且当前边界负责处理时，空值保护才合理。
 
-If reproduction is unavailable, use the strongest available trace/code evidence and state its limits. Label an unconfirmed cause as a hypothesis. If experiments stop producing new evidence, reassess the boundary and assumptions; request the smallest missing artifact or report the blocker instead of cycling through patches. Distinguish temporary mitigation from a root-cause fix.
+根因涉及非法数据时，检查其他入口是否会绕过修复；仅在具有独立职责的输入、信任或业务边界补必要校验，不能每层复制防御代码。外部故障已有证据时，可按契约设计有界重试、超时或降级，并考虑幂等性和后续可观测性；明确区分临时缓解与根因修复。
 
-**Exit:** The root cause is supported by evidence and the fix passes relevant verification. If blocked, stop with known facts, remaining uncertainty, and the next discriminating check; do not claim resolution. Do not generate low-value tests solely to satisfy the sequence. Explain when a pre-fix failure or regression test could not be obtained.
+修复失败后回到证据，而不是马上试下一个补丁。连续三次修复失败，或每次修复都暴露不同位置的耦合与新症状时，停止叠加补丁，复查共享状态、契约和架构假设；次数是升级调查的信号，不是架构错误的证明。确需超出范围的设计变更时说明证据与取舍，再解决所需决策，不自动大规模重构。用户指出“别猜了”或质疑某事实时，先核实争议事实。
 
-## VERIFY — does the implementation meet the need?
+无法复现时使用最强的现有跟踪和代码证据，说明局限；未证实的原因标为假设。调查不再带来新证据时，重新检查边界与前提，索取最小缺失信息或报告阻塞，不循环尝试补丁。
 
-Re-read the original request, subsequent accepted clarifications, acceptance criteria, relevant design decisions, current changes, and actual test results. Establish the review scope/base from context or repository evidence; include relevant staged, unstaged, committed, and new files as applicable. Read surrounding code and callers, not only changed lines. An empty working-tree diff does not prove there is nothing to review. If requirements are unavailable, state the inferred contract and limit claims of completeness.
+**停止条件：** 根因已有证据，修复通过相关验证。若受阻，说明已知事实、未决问题和下一项可区分假设的检查，不宣称解决。不要为满足步骤生成低价值测试；无法获得修复前失败或回归测试时说明原因和实际采用的验证。
 
-Map each important requirement to **implementation → evidence**. Identify gaps where code exists but behavior is not demonstrated. Consider all dimensions below for relevance; inspect the ones the change can affect:
+## VERIFY — 检查实现
 
-| Dimension | Questions that matter |
+重新阅读原始需求、后续接受的澄清、验收标准、相关设计决策、当前变更及实际测试结果。依据上下文或仓库证据确定审查范围与基准；按需覆盖已暂存、未暂存、已提交和新增文件。阅读周边逻辑与调用方，不能只看改动行；工作区差异为空不代表无实现可审查。需求缺失时明确推断的契约，并限定完整性结论。
+
+逐项关联重要需求 → 实现 → 证据，寻找“代码存在，但行为未被证明”的缺口。可先读测试理解预期，再读实现；测试本身也可能错，不能替代原始需求。下列维度都先判断相关性，再检查变更实际影响的部分：
+
+| 维度 | 关键问题 |
 | --- | --- |
-| Correctness | Does behavior satisfy the requirement? Are happy path, state transitions, and data flow correct? |
-| Missing cases | Relevant empty/null/zero/duplicate inputs; partial failure, timeout, retry, cancellation, concurrency, race, ordering, stale state? |
-| Error handling | Correct propagation and fallback? Swallowed errors or leaked internal information? |
-| Compatibility | Existing behavior, public API, data formats, and migration preserved or intentionally changed? |
-| Architecture | Existing abstractions, layer ownership, dependency direction respected? Duplicated logic or unnecessary complexity? |
-| Security, when relevant | Authentication, authorization, validation, injection, secrets, path traversal, unsafe deserialization, information leakage? |
-| Performance, when relevant | N+1, unbounded work, repeated computation, memory growth, unnecessary network calls, blocking? |
-| Tests | Assertions prove key behavior, including failure paths? Mocks hide the logic under test? Regression coverage addresses the original bug? |
+| 正确性 | 是否满足需求？正常路径、状态转换和数据流是否正确？索引及数值边界是否正确？ |
+| 遗漏场景 | 是否涉及空集合、空值、零值、重复输入、部分失败、超时、重试、取消、并发、竞态、顺序或过期状态？ |
+| 错误处理 | 传播与降级是否符合契约？是否吞异常或泄露内部信息？ |
+| 兼容性 | 既有行为、公共接口、数据格式和迁移是否保持兼容，或按明确要求变更？ |
+| 可读性与简洁性 | 命名和控制流能否独立理解？有无无效代码、重复分支、过深嵌套或掩盖意图的技巧？必要注释是否解释原因？ |
+| 架构 | 层次归属、模块边界、依赖方向是否合理？是否引入循环依赖、近似重复工具或无关分支？功能逻辑是否泄漏到共享模块？重构是真正减少概念与分支，还是只搬移复杂度？类型断言、过度可选字段或静默降级是否掩盖不明确的契约？ |
+| 安全，仅在相关时 | 身份认证、权限、输入校验、注入、密钥、路径遍历、不安全反序列化、信息泄露？外部数据是否在信任边界验证，输出是否安全编码？ |
+| 性能，仅在相关时 | N+1、无界循环或取数、缺少分页、重复昂贵计算、内存增长、热路径大对象、多余网络请求、阻塞或无必要的界面重渲染？ |
+| 测试 | 断言是否证明关键行为与错误路径，而非只执行代码或绑定实现细节？模拟是否绕过真正待验证逻辑？回归测试是否捕获原始缺陷？ |
 
-Run cost-appropriate project checks when available: targeted tests first, then affected integration tests, typecheck, lint, or build as warranted. Static checks do not prove runtime correctness. Broaden checking for unresolved risk; do not run every command ritualistically. After a correction, rerun affected checks against the final code. Never report a command as passed if it was not run or failed; distinguish environment failures from implementation failures.
+新增或升级依赖时，检查现有工具能否满足需求、新依赖的维护状态、体积、许可兼容性及已知安全风险。升级应阅读变更记录和迁移说明，检查锁文件及间接依赖变化，不把版本号或安装成功当兼容性证明。优先隔离单个依赖或紧密相关组的变更，比较升级前后的相关行为验证；无法获取资料时列为验证缺口，不引入新的检查工具依赖。
 
-Report actionable findings with severity, location when available, triggering condition, impact, and evidence. Separate speculative risks from demonstrated defects; order by impact:
+对结构问题提出具体、局部的改进方向，例如合并重复分支、复用已有工具、明确类型边界或把功能逻辑移回所属模块。不要只说“太复杂”，也不要自动新增抽象。大型混合变更可建议按独立行为拆分，但不设机械行数门槛；同时检查最终文件结构。确认变更产生了无用代码前检查调用、导出和动态使用，不能仅因文本搜索无结果就断言可删；审查任务只报告，已授权修改中仅清理证据充分且属于范围的部分。
 
-- **CRITICAL:** Severe wrong results, security compromise, data corruption, or severe regression.
-- **IMPORTANT:** Real bug, meaningful requirement omission, or concrete architecture risk.
-- **MINOR:** Local maintainability or quality issue.
-- **OPTIONAL:** Style or preference; usually omit unless requested.
+执行成本合理的项目检查：先针对性测试，再按影响选择集成测试、类型检查、静态检查、构建或手动运行。静态检查不能证明运行时正确性。只有未决风险才要求扩大验证，不仪式化运行所有命令。修正后针对最终代码重跑受影响检查。未运行或失败的命令不得标为通过；区分环境失败与实现失败，核对已有验证记录是否覆盖当前版本。
 
-Prioritize CRITICAL / IMPORTANT; do not manufacture nitpicks. If there are no substantive findings, say “没有发现影响正确性的明显问题” or its equivalent in the user's language, bounded by review scope and evidence.
+发现问题时给出严重性、可定位位置、触发条件、影响、证据及可执行建议，区分潜在风险与已证实缺陷，按影响排序：
 
-**Exit:** Requirements, key paths, relevant risks, and meaningful tests have been checked, or unavailable checks are explicitly identified. End with a concise result/findings plus **Verified** (checks and outcomes) and **Not verified** (gaps and reasons, or none within scope). Do not imply exhaustive correctness. Stop unless new evidence justifies further investigation.
+- **CRITICAL：** 严重错误结果、安全失陷、数据损坏或严重回归。
+- **IMPORTANT：** 真实缺陷、重要需求遗漏或具体架构风险。
+- **MINOR：** 局部可维护性或质量问题。
+- **OPTIONAL：** 风格与偏好，通常省略，除非用户要求。
+
+优先报告 CRITICAL / IMPORTANT，不制造琐碎问题，也不因个人风格偏好否定符合项目约定的有效改进。争议依据技术事实、项目规范和具体设计影响解决；只评价代码，不评价作者。不编造性能数字，不把无关历史问题升级为本次阻塞，也不擅自创建外部任务。没有实质问题时说明“没有发现影响正确性的明显问题”，并以审查范围和证据限定结论。
+
+**停止条件：** 已检查需求、关键路径、相关风险和有意义的测试，或明确列出无法检查的部分。简洁交付结果与发现，并区分 **Verified**（已验证的检查及结果）和 **Not verified**（未验证项及原因，或范围内无缺口）。涉及交付说明时写清改了什么、为什么及如何验证；不要暗示穷尽正确性。没有新证据就停止。

@@ -79,7 +79,27 @@ mkdir -p "$HOME/.claude/skills" && cp -R superthink "$HOME/.claude/skills/"
 - 尊重“直接做”和既有授权，不增设例行审批；review 不自动变成修改。
 - 不重建 todo、规划界面、git、shell、测试或 subagent 框架。
 
-思想来源是需求访谈、系统调试和质量审查，融合了用户提出的 `interview-me`、`systematic-debugging`、`code-review-and-quality` 三类方法；正文独立编写，没有复制或引用其文件。
+Skill 的说明、规则、表格和 description 均使用中文，仅保留标题、模式名、严重性、验证状态及必要技术标识。
+
+## 原文比对与融合记录
+
+本次直接阅读以下上游原文，并固定比对版本；链接仅用于追溯设计来源，运行 Skill 时无需访问或安装它们。这里的 `interview-me` 指 Addy Osmani 的版本，不是其他同名仓库。
+
+| 原始 Skill 与版本 | 补充到 superthink 的内容 |
+| --- | --- |
+| [interview-me](https://github.com/addyosmani/agent-skills/blob/6ca0cd7db39b41b1c37e26d335c507ee92382c6d/skills/interview-me/SKILL.md) | 明确受益者、使用场景与为什么现在做；将抽象目标转为可检验标准；必要时附当前理解帮助纠正；识别矛盾并重述意图；非交互环境和访谈停滞的处理。 |
+| [systematic-debugging](https://github.com/obra/superpowers/blob/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/systematic-debugging/SKILL.md) | 独立的正常/异常差异分析；配置、环境、依赖跨组件传播；修复失败后回到证据；连续失败触发架构复查；外部故障处理与临时缓解的区分。 |
+| [code-review-and-quality](https://github.com/addyosmani/agent-skills/blob/6ca0cd7db39b41b1c37e26d335c507ee92382c6d/skills/code-review-and-quality/SKILL.md) | 可读性与简洁性；实际减少复杂度；类型边界及功能归属；具体结构改进建议；无用代码判断；依赖和锁文件审查；检查验证记录是否覆盖最终代码。 |
+
+同时阅读 systematic-debugging 的 [条件等待](https://github.com/obra/superpowers/blob/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/systematic-debugging/condition-based-waiting.md) 与 [分层校验](https://github.com/obra/superpowers/blob/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/systematic-debugging/defense-in-depth.md) 说明，将适用原则直接融合进正文：等待真实状态并限制超时，仅在具有独立职责的边界补必要校验。
+
+为保持轻量与独立，以下原版机制没有照搬：
+
+- 不采用 95% 信心门槛、不反复要求明确确认、不拒绝用户委托自行判断。
+- 不将连续三次失败视为架构错误的证明，而作为停止堆叠补丁、升级调查的信号。
+- 不要求每层重复校验，不强制为每次修复编写测试脚本或安装其他 Skill。
+- 不强制多模型审查、固定行数限制、所有任务全套检查或例行删除确认。
+- 不引入外部工作流、参考文件或工具依赖；正文以中文重新组织，保留统一路由、风险分级和停止条件。
 
 无需 Superpowers、Addy Osmani agent-skills、grill-me、其他 Skill、外部 references、MCP、插件框架或附带脚本/CLI。Claude Code 可使用目标项目已有的测试和命令，但没有本 Skill 指定的外部工具依赖。
 
